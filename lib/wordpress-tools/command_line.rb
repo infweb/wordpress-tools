@@ -18,7 +18,8 @@ module Wordpress::Tools
       @options = {
         :wp_version => "latest",
         :show_version => false,
-        :show_help => false
+        :show_help => false,
+        :skip_wordpress => false
       }
 
       @parser = OptionParser.new { |opts| setup(opts) }
@@ -38,12 +39,33 @@ module Wordpress::Tools
         exit -1
       end
 
-      path = download_wp
-      untar_wp(path, target_directory)
+      unless options[:skip_wordpress]
+        path = download_wp
+        untar_wp(path, target_directory) 
+      end
       bootstrap_theme(target_directory, main_theme_name)
+      add_to_vcs(target_directory)
+      render_template('config.yml.erb', File.join(target_directory, 'config.yml'), :theme_name => main_theme_name)
     end
 
     private
+    def add_to_vcs(path)
+      current = FileUtils.pwd
+      begin
+        FileUtils.cd(path)
+        puts %x|git init .|
+        File.open('.gitignore', 'w') do |f|
+          l = %w(index.php license.txt readme.html wp-activate.php wp-admin/ wp-blog-header.php
+            wp-comments-post.php wp-config-sample.php wp-cron.php wp-includes wp-links-opml.php
+            wp-load.php wp-login.php wp-mail.php wp-settings.php wp-signup.php wp-trackback.php
+            xmlrpc.php wp-content/languages)
+          l.each { |pattern| f << pattern + "\n" }
+        end
+      ensure
+        FileUtils.cd(current)
+      end
+    end
+
     def bootstrap_theme(target_dir, theme_name)
       theme_path = File.join(target_dir, "wp-content", "themes", theme_name)
       FileUtils.mkdir_p(theme_path)
@@ -117,6 +139,10 @@ module Wordpress::Tools
       opts.on("--wordpress-version=[WORDPRESS_VERSION]", 
         "Wordpress Version to use. Default: #{options[:wp_version]}") do |v|
         options[:wp_version] = v
+      end
+
+      opts.on("--skip-wordpress", "Skips wordpress download (Assumes an existing wordpress site)") do
+        options[:skip_wordpress] = true
       end
 
       opts.separator ""
