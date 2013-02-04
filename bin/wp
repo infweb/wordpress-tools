@@ -1,3 +1,7 @@
 #!/usr/bin/env ruby
 
-puts "WP!"
+require 'wordpress-tools/command_line'
+
+cmd = Wordpress::Tools::CommandLine.new(ARGV)
+
+cmd.parse!

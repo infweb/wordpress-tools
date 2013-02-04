@@ -4,8 +4,8 @@ require File.expand_path('../lib/wordpress-tools/version', __FILE__)
 Gem::Specification.new do |gem|
   gem.authors       = ["Rodolfo Carvalho"]
   gem.email         = ["rodolfo@infweb.net"]
-  gem.description   = %q{TODO: Write a gem description}
-  gem.summary       = %q{TODO: Write a gem summary}
+  gem.description   = %q{A gem to deal with wordpress sites}
+  gem.summary       = %q{A gem to deal with wordpress sites}
   gem.homepage      = "http://www.infweb.net/"
 
   gem.files         = `git ls-files`.split($\)
