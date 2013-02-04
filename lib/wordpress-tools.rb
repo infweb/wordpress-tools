@@ -2,6 +2,7 @@ require "wordpress-tools/version"
 
 module Wordpress
   module Tools
-    # Your code goes here...
+    autoload :CommandLine, 'wordpress-tools/command_line'
+    autoload :Template, 'wordpress-tools/template'
   end
 end

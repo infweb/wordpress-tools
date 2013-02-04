@@ -1,9 +1,11 @@
 require 'optparse'
 require 'open-uri'
 require 'tempfile'
+require 'fileutils'
+require 'erb'
 
 module Wordpress::Tools
-	class CommandLine
+  class CommandLine
     attr_reader :parser, :options, :argv, :args, :action
 
     ACTIONS = {
@@ -38,15 +40,23 @@ module Wordpress::Tools
 
       path = download_wp
       untar_wp(path, target_directory)
-    end
-
-    def on_deploy
-      puts "Deploy!"
+      bootstrap_theme(target_directory, main_theme_name)
     end
 
     private
+    def bootstrap_theme(target_dir, theme_name)
+      theme_path = File.join(target_dir, "wp-content", "themes", theme_name)
+      FileUtils.mkdir_p(theme_path)
+      render_template "functions.php.erb", File.join(theme_path, "functions.php"), :theme_name => theme_name
+      render_template "style.css.erb", File.join(theme_path, "style.css"), :theme_name => theme_name
+    end
+
+    def main_theme_name
+      args.first
+    end
+
     def target_directory
-      File.expand_path("#{args.first}")
+      File.expand_path("#{main_theme_name}")
     end
 
     def untar_wp(from, to)
@@ -126,5 +136,14 @@ module Wordpress::Tools
         puts opts
       end
     end
-	end
+
+    def render_template(name, target_path, params={})
+      template_file = File.expand_path("../../../templates/#{name}", __FILE__)
+      template = Template.new(File.read(template_file), params)
+
+      File.open(target_path, "w") do |f|
+        f << template.render
+      end
+    end
+  end
 end

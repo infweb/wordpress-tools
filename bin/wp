@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-require 'wordpress-tools/command_line'
+require 'wordpress-tools'
 
 cmd = Wordpress::Tools::CommandLine.new(ARGV)
 
