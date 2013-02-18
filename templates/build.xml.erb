@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="<%= app_name %>" 
+  default="prepare" 
+  basedir="." 
+  description="Using phing to automate wordpress deploy">
+
+  <property file="build.properties">
+    <filterchain>
+      <expandproperties/>
+    </filterchain>
+  </property>
+
+  <property name="sync.cachedir" value="~/.repo-cache/${sync.application}"/>
+  <property name="sync.files" value="${sync.cachedir}/.gitfiles"/>
+  <property name="message" value="Print instructions for first deploy"/>
+  <property name="rsynccmd" value="rsync -av --progress --files-from=${sync.files}">
+    
+  <target name="prepare">
+    <echo msg="${message}"/>
+    <exec command="cat README.txt" logoutput="true"/>
+  </target>
+
+  <target name="deploy:prepare">
+    <fail unless="sync.remote.host" 
+      msg="Please set the property sync.remote.host on you build.properties file, or using -D switch from the command-line"/>
+
+    <property name="sync.remote.sshcommand"
+      value="mkdir -p $(dirname ${sync.cachedir}) &amp;&amp; 
+      echo $([ -d &quot;${sync.cachedir}&quot; ] || git clone ${git.repository} ${sync.cachedir}) &amp;&amp; 
+      cd ${sync.cachedir} &amp;&amp; 
+      git checkout -f ${git.branch} &amp;&amp;
+      git pull --rebase &amp;&amp;
+      echo $(git ls-files | egrep -v '&quot;'&quot;'(${sync.excludelist})'&quot;'&quot;' &gt; ${sync.files})"/>
+    <echo msg="Executing '${sync.remote.sshcommand}' on remote host ${sync.remote.host}"/>
+    <exec 
+      command="ssh ${sync.remote.user}@${sync.remote.host} '${sync.remote.sshcommand}'"
+      logoutput="true"
+      />
+  </target>
+
+  <target name="deploy:check:all" description="List changes to be sent across all servers">
+    <foreach list="${sync.remote.appservers}" target="deploy:check" param="sync.remote.host"/>
+  </target>
+
+  <target name="deploy:all" description="List changes to be sent across all servers">
+    <foreach list="${sync.remote.appservers}" target="deploy" param="sync.remote.host"/>
+  </target>
+
+  <target name="deploy:check" depends="deploy:prepare" description="List changes to be sent to server">
+    <property name="sync.remote.rsynccommand"
+      value="${rsynccmd} --dry-run ${sync.cachedir} ${sync.destination.projectdir}"/>
+    <exec
+      command="ssh ${sync.remote.user}@${sync.remote.host} '${sync.remote.rsynccommand}'"
+      logoutput="true"/>
+  </target>
+
+  <target name="deploy" depends="deploy:prepare" description="Sync files to the remote server">   
+    <property name="sync.remote.rsynccommand"
+      value="${rsynccmd} ${sync.cachedir} ${sync.destination.projectdir}; chmod a+w ${sync.destination.projectdir}/tmp"/>
+    
+    <exec
+      command="ssh ${sync.remote.user}@${sync.remote.host} '${sync.remote.rsynccommand}'"
+      logoutput="true"/>
+  </target>
+</project>

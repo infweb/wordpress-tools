@@ -9,8 +9,7 @@ module Wordpress::Tools
     attr_reader :parser, :options, :argv, :args, :action
 
     ACTIONS = {
-      :init => "Initialize a blank project",
-      :deploy => "Deploy a project"
+      :init => "Initialize a blank project"
     }
 
     def initialize(argv)
@@ -45,7 +44,15 @@ module Wordpress::Tools
       end
       bootstrap_theme(target_directory, main_theme_name)
       add_to_vcs(target_directory)
-      render_template('config.yml.erb', File.join(target_directory, 'config.yml'), :theme_name => main_theme_name)
+      render_template('config.yml.erb', File.join(target_directory, 'config.yml'), 
+        :theme_name => main_theme_name)
+      render_template('build.xml.erb', File.join(target_directory, 'build.xml'),
+        :app_name => main_theme_name)
+      render_template('build.properties.erb', File.join(target_directory, 'build.properties'),
+        :app_name => main_theme_name)
+      # TODO:
+      # compass setup
+      # database setup (?)
     end
 
     private
@@ -71,6 +78,7 @@ module Wordpress::Tools
       FileUtils.mkdir_p(theme_path)
       render_template "functions.php.erb", File.join(theme_path, "functions.php"), :theme_name => theme_name
       render_template "style.css.erb", File.join(theme_path, "style.css"), :theme_name => theme_name
+      puts %|cd #{theme_path}; compass create .|
     end
 
     def main_theme_name
@@ -144,10 +152,6 @@ module Wordpress::Tools
       opts.on("--skip-wordpress", "Skips wordpress download (Assumes an existing wordpress site)") do
         options[:skip_wordpress] = true
       end
-
-      opts.separator ""
-      opts.separator "deploy:"
-      opts.separator "TODO"
 
       opts.separator ""
       opts.separator "Common options:"

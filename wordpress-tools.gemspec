@@ -16,4 +16,5 @@ Gem::Specification.new do |gem|
   gem.version       = Wordpress::Tools::VERSION
 
   gem.add_dependency "rake"
+  gem.add_depencency "compass"
 end
