@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project name="<%= app_name %>" 
+<project name="<%= theme_name %>" 
   default="prepare" 
   basedir="." 
   description="Using phing to automate wordpress deploy">
@@ -13,7 +13,7 @@
   <property name="sync.cachedir" value="~/.repo-cache/${sync.application}"/>
   <property name="sync.files" value="${sync.cachedir}/.gitfiles"/>
   <property name="message" value="Print instructions for first deploy"/>
-  <property name="rsynccmd" value="rsync -av --progress --files-from=${sync.files}">
+  <property name="rsynccmd" value="rsync -av --progress --files-from=${sync.files}"/>
     
   <target name="prepare">
     <echo msg="${message}"/>

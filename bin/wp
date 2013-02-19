@@ -2,6 +2,6 @@
 
 require 'wordpress-tools'
 
-cmd = Wordpress::Tools::CommandLine.new(ARGV)
+cmd = Wordpress::Tools::CommandLine::Parser.new(ARGV)
 
 cmd.parse!

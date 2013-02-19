@@ -1,4 +1,4 @@
-module Wordpress::Tools::Action
+module Wordpress::Tools::CommandLine::Action
   class Init < Base
     def run!
       if args.empty?
@@ -16,6 +16,8 @@ module Wordpress::Tools::Action
       %w(build.xml build.properties).each do |t|
         render_template "#{t}.erb", "#{target_directory}/#{t}", :theme_name => main_theme_name
       end
+
+      config.save
     end
 
     private
@@ -24,7 +26,7 @@ module Wordpress::Tools::Action
       theme_path = "#{target_dir}/wp-content/themes/#{theme_name}"
       classes_path = "#{theme_path}/classes"
       FileUtils.mkdir_p(classes_path)
-      render_template "functions.php.erb", "#{theme_path}/functions.php"), 
+      render_template "functions.php.erb", "#{theme_path}/functions.php", 
                       :theme_name => theme_name, :class_prefix => options[:class_prefix]
 
       render_template "theme_class.php.erb", "#{classes_path}/#{options[:class_prefix]}Theme.class.php",
@@ -73,8 +75,11 @@ module Wordpress::Tools::Action
 
     # Utility Methods
     def main_theme_name; args.first; end
+    def theme_path
+      "#{target_directory}/wp-content/themes/#{main_theme_name}"
+    end
     def target_directory
-      File.expand_path("#{main_theme_name}")
+      @target_directory ||= File.expand_path("#{main_theme_name}")
     end
   end
 end

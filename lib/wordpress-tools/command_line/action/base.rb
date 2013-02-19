@@ -1,9 +1,10 @@
-module Wordpress::Tools::Action
+module Wordpress::Tools::CommandLine::Action
   class Base
     attr_reader :args, :options
 
     def initialize(args, options={})
       @args = args
+      @options = options
       @config = Wordpress::Tools::Configuration.new(args, options)
     end
 
@@ -16,6 +17,7 @@ module Wordpress::Tools::Action
     end
 
     protected
+    attr_reader :config
 
     def run(cmd)
       if options[:dry_run]
