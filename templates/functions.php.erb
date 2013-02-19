@@ -1,4 +1,36 @@
 <?php
-/*
- Theme Name: <%= theme_name %> 
-*/
+require_once dirname(__FILE__) . '/classes/<%= class_prefix %>Theme.class.php';
+
+function <%= theme_name %>setup_theme() {
+    <%= class_prefix %>Theme::themeInitialize();
+}
+add_action('after_setup_theme', '<%= theme_name %>setup_theme');
+
+
+function <%= theme_name %>init() {
+    if (class_exists('STSTheme'))
+    {
+        $theme =& <%= class_prefix %>Theme::getInstance();
+        $theme->init();
+    }
+    else
+    {
+        $msg = __("Please install and/or activate iNF Web Theme Framework", "<%= theme_name %>");
+        if (is_admin())
+            add_action('admin_notices', create_function('',
+                "echo \"<div id='message' class='error'><p><strong>$msg</strong></p></div>\";"
+            ));
+        else
+            die($msg);
+    }
+
+    $files = scandir(TEMPLATEPATH . '/helpers', 1);
+
+    if ($files !== false) {
+        foreach ($files as $file) {
+            if (!preg_match('/\.php$/', $file)) continue;
+            include_once dirname(__FILE__ . '/helpers/' . $file);
+        }
+    }
+}
+add_action('init', '<%= theme_name %>init');

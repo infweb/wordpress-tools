@@ -3,9 +3,12 @@ require 'open-uri'
 require 'tempfile'
 require 'fileutils'
 require 'erb'
+require 'active_support/core_ext'
 
 module Wordpress::Tools
   class CommandLine
+    autoload :Action, 'wordpress-tools/command_line/action'
+
     attr_reader :parser, :options, :argv, :args, :action
 
     ACTIONS = {
@@ -18,7 +21,9 @@ module Wordpress::Tools
         :wp_version => "latest",
         :show_version => false,
         :show_help => false,
-        :skip_wordpress => false
+        :skip_wordpress => false,
+        :dry_run => false,
+        :vebose => false
       }
 
       @parser = OptionParser.new { |opts| setup(opts) }
@@ -27,88 +32,17 @@ module Wordpress::Tools
     def parse!
       @action, *@args = @parser.parse!(@argv)
       validate!
-      nil
-    end
-
-    # Actions
-    def on_init
-      if args.empty?
-        puts "You must specify a main theme name."
-        puts @parser
-        exit -1
-      end
-
-      unless options[:skip_wordpress]
-        path = download_wp
-        untar_wp(path, target_directory) 
-      end
-      bootstrap_theme(target_directory, main_theme_name)
-      add_to_vcs(target_directory)
-      render_template('config.yml.erb', File.join(target_directory, 'config.yml'), 
-        :theme_name => main_theme_name)
-      render_template('build.xml.erb', File.join(target_directory, 'build.xml'),
-        :app_name => main_theme_name)
-      render_template('build.properties.erb', File.join(target_directory, 'build.properties'),
-        :app_name => main_theme_name)
-      # TODO:
-      # compass setup
-      # database setup (?)
+      current_action.run!
     end
 
     private
-    def add_to_vcs(path)
-      current = FileUtils.pwd
+
+    def current_action
       begin
-        FileUtils.cd(path)
-        puts %x|git init .|
-        File.open('.gitignore', 'w') do |f|
-          l = %w(index.php license.txt readme.html wp-activate.php wp-admin/ wp-blog-header.php
-            wp-comments-post.php wp-config-sample.php wp-cron.php wp-includes wp-links-opml.php
-            wp-load.php wp-login.php wp-mail.php wp-settings.php wp-signup.php wp-trackback.php
-            xmlrpc.php wp-content/languages)
-          l.each { |pattern| f << pattern + "\n" }
-        end
-      ensure
-        FileUtils.cd(current)
+        @action_obj ||= "Action::#{action.to_s.camelize}".classify.new(args, options)
+      rescue
+        nil
       end
-    end
-
-    def bootstrap_theme(target_dir, theme_name)
-      theme_path = File.join(target_dir, "wp-content", "themes", theme_name)
-      FileUtils.mkdir_p(theme_path)
-      render_template "functions.php.erb", File.join(theme_path, "functions.php"), :theme_name => theme_name
-      render_template "style.css.erb", File.join(theme_path, "style.css"), :theme_name => theme_name
-      puts %|cd #{theme_path}; compass create .|
-    end
-
-    def main_theme_name
-      args.first
-    end
-
-    def target_directory
-      File.expand_path("#{main_theme_name}")
-    end
-
-    def untar_wp(from, to)
-      wp_src_dir = File.join File.dirname(from), "wordpress"
-
-      cmd = "tar -xzvf #{from} -C #{File.dirname(from)}"
-      puts "Running #{cmd}..."
-      puts %x|#{cmd}|
-      puts %x|mv -v #{wp_src_dir} #{to}|
-    end
-
-    def download_wp
-      tmp = Tempfile.new('wp')
-      puts "Downloading Wordpress from #{wp_download_link}..."
-      open(wp_download_link) do |io|
-        tmp << io.read
-        tmp.path
-      end
-    end
-
-    def wp_download_link
-      "http://br.wordpress.org/#{options[:wp_version]}-pt_BR.tar.gz"
     end
 
     def validate!
@@ -131,7 +65,10 @@ module Wordpress::Tools
         exit -3
       end
 
-      send("on_#{action}")
+      unless current_action.valid?
+        puts "Invalid parameters for action: #{action}"
+        exit -5
+      end
     end
 
     def setup(opts)
@@ -161,18 +98,17 @@ module Wordpress::Tools
         puts "wp (wodpress-tools) version #{Wordpress::Tools::VERSION}"
       end
 
+      opts.on("-V", "--verbose") do
+        options[:verbose] = true
+      end
+
+      opts.on("--dry-run") do
+        options[:dry_run] = true
+      end
+
       opts.on_tail("-h", "--help", "Print this message") do
         options[:show_help] = true
         puts opts
-      end
-    end
-
-    def render_template(name, target_path, params={})
-      template_file = File.expand_path("../../../templates/#{name}", __FILE__)
-      template = Template.new(File.read(template_file), params)
-
-      File.open(target_path, "w") do |f|
-        f << template.render
       end
     end
   end

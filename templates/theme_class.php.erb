@@ -1,0 +1,37 @@
+<?php
+<% class_name = "#{class_prefix}Theme" -%>
+class <%= class_name %> {
+	static $instance;
+    static function getInstance() {
+        if (self::$instance == null)
+            self::$instance = new <%= class_name %>();
+        return self::$instance;
+    }
+    
+    static function themeInitialize() {
+        $i = self::getInstance();
+        $i->setFeatures();
+        add_action('init', array(&$i, 'init'));
+    }
+    
+    function __construct() {
+        $path = get_template_directory() . "/languages";
+        load_theme_textdomain('<%= theme_name %>', $path);
+    }
+    
+    function init() {
+        $this->registerPostTypes();
+    }
+    
+    function setFeatures() {
+        // Uncomment these lines to add theme support
+        /*
+        add_theme_support('post-thumbnails');
+        add_theme_support('menus');
+        */
+    }
+    
+    function registerPostTypes() {
+        // Register post types here
+    }
+}
