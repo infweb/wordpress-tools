@@ -11,14 +11,14 @@ module Wordpress::Tools::CommandLine::Action
       end
 
       bootstrap_theme(target_directory, main_theme_name)
-      add_to_vcs(target_directory)
 
       %w(build.xml build.properties).each do |t|
         render_template "#{t}.erb", "#{target_directory}/#{t}", :theme_name => main_theme_name
       end
 
       config.update :theme_name => main_theme_name
-      config.save("#{target_directory}/config.yml")
+      config.save("#{target_directory}/config.yml") unless dry_run?
+      add_to_vcs(target_directory)
     end
 
     private
@@ -26,7 +26,14 @@ module Wordpress::Tools::CommandLine::Action
     def bootstrap_theme(target_dir, theme_name)
       theme_path = "#{target_dir}/wp-content/themes/#{theme_name}"
       classes_path = "#{theme_path}/classes"
-      FileUtils.mkdir_p(classes_path)
+      templates_path = "#{theme_path}/templates"
+      helpers_path = "#{theme_path}/helpers"
+      assets_path = "#{theme_path}/assets"
+
+      [classes_path, templates_path, helpers_path, assets_path].each do |dir|
+        create_directory dir
+      end
+
       render_template "functions.php.erb", "#{theme_path}/functions.php", 
                       :theme_name => theme_name, :class_prefix => options[:class_prefix]
 
@@ -38,39 +45,39 @@ module Wordpress::Tools::CommandLine::Action
       end
 
       render_template "style.css.erb", File.join(theme_path, "style.css"), :theme_name => theme_name
-      run "cd #{theme_path}; compass create ."
+      cd_into(assets_path) { run "compass create ." }
     end
 
     def add_to_vcs(path)
-      current = FileUtils.pwd
-      begin
-        FileUtils.cd(path)
+      cd_into path do
         run "git init ."
         copy_file "main_gitignore", "#{path}/.gitignore"
         
         render_template "themes_gitignore.erb", "#{File.dirname(theme_path)}/.gitignore", 
                       :theme_name => main_theme_name
         copy_file("plugins_gitignore", "#{target_directory}/wp-content/plugins/.gitignore")
-      ensure
-        FileUtils.cd(current)
       end
     end
 
     def untar_wp(from, to)
-      wp_src_dir = File.join File.dirname(from), "wordpress"
+      wp_src_dir = "#{File.dirname(from)}/wordpress"
 
-      cmd = "tar -xzvf #{from} -C #{File.dirname(from)}"
-      puts "Running #{cmd}..."
+      cmd = "tar -xz#{ "v" if verbose?}f #{from} -C #{File.dirname(from)}"
       run cmd
       run "mv -v #{wp_src_dir} #{to}"
     end
 
     def download_wp
       tmp = Tempfile.new('wp')
-      puts "Downloading Wordpress from #{wp_download_link}..."
-      open(wp_download_link) do |io|
-        tmp << io.read
-        tmp.path
+      puts "Downloading Wordpress from #{wp_download_link}..." if verbose?
+
+      if dry_run?
+        return "/some/dummy/path/for/wp"
+      else
+        open(wp_download_link) do |io|
+          tmp << io.read
+          tmp.path
+        end
       end
     end
 

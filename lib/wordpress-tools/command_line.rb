@@ -1,7 +1,6 @@
 require 'optparse'
 require 'open-uri'
 require 'tempfile'
-require 'fileutils'
 require 'erb'
 require 'active_support/core_ext'
 
@@ -24,7 +23,7 @@ module Wordpress::Tools
           :show_help => false,
           :skip_wordpress => false,
           :dry_run => false,
-          :vebose => false
+          :verbose => false
         }
 
         @parser = OptionParser.new { |opts| setup(opts) }
