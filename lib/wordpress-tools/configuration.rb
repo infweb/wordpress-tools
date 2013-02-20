@@ -3,6 +3,11 @@ require 'yaml'
 
 module Wordpress::Tools
   class Configuration
+    TRANSIENT_CONFIG = [
+      :dry_run, :show_version, :show_help, :skip_wordpress,
+      :verbose, :wp_version
+    ]
+
     attr_reader :action
 
     def initialize(args, options)
@@ -10,8 +15,9 @@ module Wordpress::Tools
       merge_config!(args, options)
     end
 
-    def save
-      File.open(config_file_path, "w") { |f| f << @config.to_yaml }
+    def save(path = nil)
+      path = path.nil? ? config_file_path : path
+      File.open(path, "w") { |f| f << @config.dup.delete_if { |k, v| TRANSIENT_CONFIG.include?(k.to_sym) }.to_yaml }
     end
 
     def target_path
@@ -28,6 +34,10 @@ module Wordpress::Tools
 
     def wordpress_version
       @config[:wordpress_version]
+    end
+
+    def update(extra_options)
+      @config.merge! extra_options
     end
 
     private

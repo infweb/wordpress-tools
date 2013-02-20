@@ -17,7 +17,8 @@ module Wordpress::Tools::CommandLine::Action
         render_template "#{t}.erb", "#{target_directory}/#{t}", :theme_name => main_theme_name
       end
 
-      config.save
+      config.update :theme_name => main_theme_name
+      config.save("#{target_directory}/config.yml")
     end
 
     private
@@ -31,6 +32,10 @@ module Wordpress::Tools::CommandLine::Action
 
       render_template "theme_class.php.erb", "#{classes_path}/#{options[:class_prefix]}Theme.class.php",
                       :theme_name => theme_name, :class_prefix => options[:class_prefix]
+
+      %w(index header footer).each do |f|
+        copy_file "#{f}.php", "#{theme_path}/#{f}.php"
+      end
 
       render_template "style.css.erb", File.join(theme_path, "style.css"), :theme_name => theme_name
       run "cd #{theme_path}; compass create ."
