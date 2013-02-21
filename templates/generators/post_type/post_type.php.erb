@@ -1,0 +1,24 @@
+<?php
+class <%= class_name %> extends InfWebPostType {
+    protected function getLabels() {
+        return array(
+            'name' => __('<%= class_name %>', '<%= theme_name %>'),
+            'singular_name' => __('<%= class_name %>', '<%= theme_name %>'),
+            'add_new' => sprintf(__('Add new %1$s', 'sts'), __('<%= class_name %>', '<%= theme_name %>')),
+            'add_new_item' => sprintf(__('Add new %1$s', 'sts'), __('<%= class_name %>', '<%= theme_name %>')),
+            'edit_item' => sprintf(__('Edit %1$s', '<%= theme_name %>'), __('<%= class_name %>', '<%= theme_name %>')),
+            'menu_name' => __('<%= class_name %>s', '<%= theme_name %>'),
+            'all_items' => __('List', '<%= theme_name %>')
+        );
+    }
+
+    protected function getName() {
+        return "<%= class_prefix.downcase %>_<%= class_name.gsub(%r|^#{class_prefix}|, '').underscore %>";
+    }
+
+    protected function getOptions() {
+        return array(
+            // put your options for register_post_type function
+            );
+    }
+}

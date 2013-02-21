@@ -7,12 +7,15 @@ require 'active_support/core_ext'
 module Wordpress::Tools
   module CommandLine
     autoload :Action, 'wordpress-tools/command_line/action'
+    autoload :Generators, 'wordpress-tools/command_line/generators'
+    autoload :Utils, 'wordpress-tools/command_line/utils'
 
     class Parser
       attr_reader :parser, :options, :argv, :args, :action
 
       ACTIONS = {
-        :init => "Initialize a blank project"
+        :init => "Initialize a blank project",
+        :generate => "Generate code for elements",
       }
 
       def initialize(argv)

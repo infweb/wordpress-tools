@@ -5,6 +5,8 @@ module Wordpress::Tools::CommandLine::Action
         raise "You must specify a main theme name."
       end
 
+      config.update :theme_name => args.first
+
       unless options[:skip_wordpress]
         path = download_wp
         untar_wp(path, target_directory) 
@@ -16,7 +18,6 @@ module Wordpress::Tools::CommandLine::Action
         render_template "#{t}.erb", "#{target_directory}/#{t}", :theme_name => main_theme_name
       end
 
-      config.update :theme_name => main_theme_name
       config.save("#{target_directory}/config.yml") unless dry_run?
       add_to_vcs(target_directory)
     end
@@ -86,7 +87,7 @@ module Wordpress::Tools::CommandLine::Action
     end
 
     # Utility Methods
-    def main_theme_name; args.first; end
+    def main_theme_name; config.theme_name; end
     def theme_path
       "#{target_directory}/wp-content/themes/#{main_theme_name}"
     end

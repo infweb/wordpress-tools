@@ -1,16 +1,14 @@
-require 'colorize'
-
-module Wordpress::Tools::CommandLine::Action
+module Wordpress::Tools::CommandLine::Generators
   class Base
-    attr_reader :args, :options
+    attr_accessor :args, :options
 
-    def initialize(args, options={})
+    def initialize(args, options)
       @args = args
       @options = options
       @config = Wordpress::Tools::Configuration.new(args, options)
     end
 
-    def run!
+    def generate!
       raise NotImplementedError
     end
 

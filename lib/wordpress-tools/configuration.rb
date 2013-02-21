@@ -40,6 +40,10 @@ module Wordpress::Tools
       @config.merge! extra_options
     end
 
+    def has_config?
+      !!@has_config
+    end
+
     private
     def merge_config!(args, options)
       @config.merge!(options)
@@ -55,8 +59,10 @@ module Wordpress::Tools
     def read_configuration!
       if File.exists? config_file_path
         @config = YAML.load File.read(config_file_path)
+        @has_config = true
       else
         @config = {}
+        @has_config = false;
       end
     end
   end
